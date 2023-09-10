@@ -11,8 +11,9 @@ from inputimeout import inputimeout, TimeoutOccurred
 finishsleep = Event()
 inputasked = Event()
 
+# divides screen info into smaller numbers as pyautogui doesn't use floats
 width, height = pyautogui.size()
-width = width // 6  # divides screen info into smaller numbers as pyautogui doesn't use floats
+width = width // 6  
 height = height // 6
 
 count = 0
@@ -24,16 +25,23 @@ ImageDict = {}
 locatedict = {}
 Images = []
 
-
-def loadImageAssets():  #removes need to write full address for calling location
+ #removes need to write full address for calling location
+def loadImageAssets(): 
     for im in Images:
         Image = f"assets/{im}.png"
         ImageDict[im] = Image
 
 
 def locatebuttons():
+    try:
+        locatecentre(width * 7//2, height * 3,ImageDict["expand"])
+        click("expand")
+    except:
+        print(
+            "Setup Failed, exiting! \n Reminder: For first time setup, click into the character tab and nothing else."
+        )
+        exit()
     values = [ #using width and height variables so this code works across all screen resolutions (same or close aspect ratio)
-    (width * 7//2, height * 3, ImageDict["expand"]),
     (width * 2, height * 5, ImageDict["xp"]),
     (width * 2, height * 3, ImageDict["growth"]),
     (width * 3, 0, ImageDict["boss"]),
