@@ -33,6 +33,7 @@ def LoadImageAssets():
 
 
 def LocateAllButtons():
+    #this button has to be found first and clicked
     try:
         LocateButton(xSubRegions * 7//2, ySubRegions * 3,IconPath["expand"])
         ClickButton("expand")
@@ -42,7 +43,7 @@ def LocateAllButtons():
         )
         exit()
 
-     #using xSubRegions and ySubRegions variables so this code works across all screen resolutions (same or close aspect ratio)
+    #using xSubRegions and ySubRegions variables to define the area of screen to look in
     buttons = [
     (xSubRegions * 2, ySubRegions * 5, IconPath["xp"]),
     (xSubRegions * 2, ySubRegions * 3, IconPath["growth"]),
@@ -84,11 +85,12 @@ def LocateAllButtons():
     buttons3 = buttons[11:14]
     for button in buttons3:
         LocateButton(*button)
-
+    
+    #resets back to default
     ClickButton("close")
     ClickButton("xp")
 
-#function to find where a button is
+
 def LocateButton(xLocation, yLocation, iconpath): 
     try:
         xvalue2, yvalue2 = pyautogui.locateCenterOnScreen(
@@ -167,10 +169,11 @@ def MainLoop():
     global MaxCount
     xvalue, yvalue = ButtonLocation["notreadylevel"]
     while 1:
-        #checks to see if level up button is ready
+        #checks to see if you've levelled up
         if pyautogui.pixel(xvalue, yvalue + ySubRegions // 12)[2] == 182: 
             ClickButton("notreadylevel")
             UpgradeCharacter()
+        #checks to see if pause has been called
         schedule.run_pending()
 
         UpgradeStats()
@@ -197,14 +200,16 @@ def UserInput():
             "Type 'p' for Pause, or 'stop' to end the program, or 'reset' to refind button locations. Note: Give the program some time to pause. \n> "
         ):
             case "p":
-                # schedules Pause at the next end of loop
-                timepause = TimeNow()
-                schedule.every().day.at(timepause).do(
+                # schedules pause at the next end of loop
+                TimeScheduled = TimeNow()
+                schedule.every().day.at(TimeScheduled).do(
                     Pause
                 )  
                 print("Input received")
+                #waits till user resumes
                 while not UserResumed.is_set():
                     time.sleep(0.5)
+                #clears schedule just in case
                 schedule.clear()
                 User_InputFinished.set()
             case "stop":
@@ -242,26 +247,22 @@ def DefaultPage():
             xvalue - xSubRegions, yvalue2 + ySubRegions, 0.7, pyautogui.easeInQuad, button="left" #scrolls back up
         )
 
-# claims attendence reward
-
 
 #this spaghetti code returns current time + 1 minute
 def TimeNow(): 
-    TimeNow = (
-        time.localtime()
-    )  
+    TimeNow = (time.localtime())  
     # grabs 1 minute ahead of current time so scheduler works
     TimeNowHr = time.strftime("%H", TimeNow)
     TimeNowMin = time.strftime("%M", TimeNow)
     TimeScheduleMin = int(TimeNowMin) + 1
     # time module gives time as 12:9 if minutes is below 10
-    if (
-        int(TimeScheduleMin) <= 9
-    ):  
+    if (int(TimeScheduleMin) <= 9):  
         TimeScheduleMin = f"0{TimeScheduleMin}"
+
     elif(TimeScheduleMin==60):
         TimeScheduleMin = 0
         TimeNowHr = int(TimeNowHr) + 1
+
     TimeScheduled = f"{TimeNowHr}:{TimeScheduleMin}"
     return TimeScheduled
 
@@ -277,6 +278,7 @@ def Pause():
     UserResumed.set()  
     print("Resumed!")
 
+# claims attendence reward
 def ClaimAttendence():
     xvalue2, yvalue2 = pyautogui.locateCenterOnScreen(
         "assets/claim.png", region=(xSubRegions * 2, ySubRegions * 4, 600, 300), confidence=0.8
@@ -287,6 +289,7 @@ def ClaimAttendence():
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
     time.sleep(1)
     DefaultPage()
+
 #this is all commented out because it doesn't work
 # def ac():
 #     while not UserResumed.is_set():
@@ -345,6 +348,7 @@ else:
     LoadImageAssets()
     LocateAllButtons()
     SetupDone = ["True"]
+    #organises everything into one dictionary
     data["Images"] = TempIcons
     data["ButtonLocation"] = ButtonLocation
     data["Loaded"] = SetupDone
