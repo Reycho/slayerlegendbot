@@ -8,278 +8,288 @@ import keyboard
 from inputimeout import inputimeout, TimeoutOccurred
 
 
-finishsleep = Event()
-inputasked = Event()
+UserResumed = Event()
+User_InputFinished = Event()
 
 # divides screen info into smaller numbers as pyautogui doesn't use floats
-width, height = pyautogui.size()
-width = width // 6  
-height = height // 6
+xScreenRes, yScreenRes = pyautogui.size()
+xSubRegions = xScreenRes // 6  
+ySubRegions = yScreenRes // 6
 
-count = 0
-bossfail = 0
-topcount = 15
+CurrentCount = 0
+BossFailCount = 0
+MaxCount = 15
 
 data = {}
-ImageDict = {}
-locatedict = {}
-Images = []
+IconPath = {}
+ButtonLocation = {}
+TempIcons = []
 
- #removes need to write full address for calling location
-def loadImageAssets(): 
-    for im in Images:
-        Image = f"assets/{im}.png"
-        ImageDict[im] = Image
+#removes need to write full address for calling location
+def LoadImageAssets(): 
+    for ImName in TempIcons:
+        Imagepath = f"assets/{ImName}.png"
+        IconPath[ImName] = Imagepath
 
 
-def locatebuttons():
+def LocateAllButtons():
     try:
-        locatecentre(width * 7//2, height * 3,ImageDict["expand"])
-        click("expand")
+        LocateButton(xSubRegions * 7//2, ySubRegions * 3,IconPath["expand"])
+        ClickButton("expand")
     except:
         print(
             "Setup Failed, exiting! \n Reminder: For first time setup, click into the character tab and nothing else."
         )
         exit()
-    values = [ #using width and height variables so this code works across all screen resolutions (same or close aspect ratio)
-    (width * 2, height * 5, ImageDict["xp"]),
-    (width * 2, height * 3, ImageDict["growth"]),
-    (width * 3, 0, ImageDict["boss"]),
-    (width * 3, height * 4, ImageDict["money"]),
-    (width * 3, height * 5, ImageDict["money2"]),
-    (width * 3, height * 3, ImageDict["notreadylevel"]),
-    (width * 2, height * 3, ImageDict["enhance"]),
-    (width * 5 // 2, height * 5, ImageDict["equip"]),
-    (width * 2, height * 3, ImageDict["accessory"]),
-    (width * 2, height * 4, ImageDict["sword"]),
-    (width * 2, height * 3, ImageDict["weapon"]),
-    (width * 7 // 2, height * 3 // 2, ImageDict["next"]),
-    (width * 5 // 2, height * 4, ImageDict["combinebig"]),
-    (width * 5 // 2, height * 5, ImageDict["close"])
+
+     #using xSubRegions and ySubRegions variables so this code works across all screen resolutions (same or close aspect ratio)
+    buttons = [
+    (xSubRegions * 2, ySubRegions * 5, IconPath["xp"]),
+    (xSubRegions * 2, ySubRegions * 3, IconPath["growth"]),
+    (xSubRegions * 3, 0, IconPath["boss"]),
+    (xSubRegions * 3, ySubRegions * 4, IconPath["money"]),
+    (xSubRegions * 3, ySubRegions * 5, IconPath["money2"]),
+    (xSubRegions * 3, ySubRegions * 3, IconPath["notreadylevel"]),
+    (xSubRegions * 2, ySubRegions * 3, IconPath["enhance"]),
+    (xSubRegions * 5 // 2, ySubRegions * 5, IconPath["equip"]),
+    (xSubRegions * 2, ySubRegions * 3, IconPath["accessory"]),
+    (xSubRegions * 2, ySubRegions * 4, IconPath["sword"]),
+    (xSubRegions * 2, ySubRegions * 3, IconPath["weapon"]),
+    (xSubRegions * 7 // 2, ySubRegions * 3 // 2, IconPath["next"]),
+    (xSubRegions * 5 // 2, ySubRegions * 4, IconPath["combinebig"]),
+    (xSubRegions * 5 // 2, ySubRegions * 5, IconPath["close"])
     ]
-    values1 = values[:8]
-    for value in values1:  # finds values of all buttons by looping through, seperated into 3 seperate times as some buttons exists in different menus
-        locatecentre(*value)
+    # finds buttons of all buttons by looping through, seperated into 3 seperate times as some buttons exists in different menus
+    buttons1 = buttons[:8]
+    for button in buttons1:  
+        LocateButton(*button)
 
-    click("growth")      #this and the ones below  open a new menu
+    #this ClickButton function and the ones below open a new menu
+    ClickButton("growth")      
+    LocateButton(xSubRegions * 3, ySubRegions * 4, IconPath["plus"])
+    LocateButton(xSubRegions * 3, ySubRegions * 5, IconPath["plus2"])
 
-    locatecentre(width * 3, height * 4, ImageDict["plus"])
-    locatecentre(width * 3, height * 5, ImageDict["plus2"])
+    ClickButton("enhance")
+    ClickButton("equip")
+    buttons2 = buttons[8:11]
+    for button in buttons2:
+        LocateButton(*button)
 
-    click("enhance")
-    click("equip")
-    values2 = values[8:11]
-    for value in values2:
-        locatecentre(*value)
+    ClickButton("sword")
 
-    click("sword")
+    LocateButton(xSubRegions * 3, ySubRegions // 2, IconPath["combine"])
 
-    locatecentre(width * 3, height // 2, ImageDict["combine"])
+    ClickButton("combine")
 
-    click("combine")
+    buttons3 = buttons[11:14]
+    for button in buttons3:
+        LocateButton(*button)
 
-    values3 = values[11:14]
-    for value in values3:
-        locatecentre(*value)
+    ClickButton("close")
+    ClickButton("xp")
 
-    click("close")
-    click("xp")
-
-
-def locatecentre(x, y, image): #function to find where a button is
+#function to find where a button is
+def LocateButton(xLocation, yLocation, iconpath): 
     try:
-        a, b = pyautogui.locateCenterOnScreen(
-            image, region=(x, y, 500, 500), confidence=0.85
+        xvalue2, yvalue2 = pyautogui.locateCenterOnScreen(
+            iconpath, region=(xLocation, yLocation, 500, 500), confidence=0.85
         )
-        image = image.removesuffix(".png")
-        locatedict[image.removeprefix("assets/")] = int(a), int(b)    #removes need to write full address everytime when calling locatdict
+        #removes need to write full address everytime when calling ButtonLocation
+        iconname = iconpath.removesuffix(".png")
+        ButtonLocation[iconname.removeprefix("assets/")] = int(xvalue2), int(yvalue2)    
 
     except:
-        print(f"Could not locate {image}. Is the app fullscreened?")
+        print(f"Could not locate {iconpath}. Is the app fullscreened?")
         exit()
 
 
-def click(image, z=0.1):
-    x, y = locatedict[image]
-    win32api.SetCursorPos((x, y))
+def ClickButton(image, z=0.1):
+    xvalue, yvalue = ButtonLocation[image]
+    win32api.SetCursorPos((xvalue, yvalue))
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
     time.sleep(z)
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
     time.sleep(0.2)
 
+# upgrades with stat points
+def UpgradeCharacter():  
+    ClickButton("growth")
+    ClickButton("plus", 1)
+    ClickButton("enhance")
 
-def growth():  # upgrades with stat points
-    click("growth")
-    time.sleep(0.5)
-    click("plus", 1)
-    time.sleep(0.1)
-    click("enhance")
-    time.sleep(2)
-
-
-def upgrade(): #upgrades stats with money
-    x, y = locatedict["money"]
-    x, b = locatedict["money2"]
+#upgrades stats with money
+def UpgradeStats(): 
+    #xvalue value is the same for both
+    xvalue, yvalue = ButtonLocation["money"]
+    xvalue, yvalue2 = ButtonLocation["money2"]
 
     for i in range(3):
-        click("money", 1)
-        click("money2", 1)
+        ClickButton("money", 1)
+        ClickButton("money2", 1)
 
-        win32api.SetCursorPos((x - width, b))
+        win32api.SetCursorPos((xvalue - xSubRegions, yvalue2))
         pyautogui.dragTo(
-            x - width, y - (b - y), 3, pyautogui.easeOutQuad, button="left"
-        )  # buys upgrades
+            xvalue - xSubRegions, yvalue - (yvalue2 - yvalue), 3, pyautogui.easeOutQuad, button="left"
+        ) 
 
-    time.sleep(2)
-
-    click("money2", 0.5)
-
+    ClickButton("money2", 0.5)
+    # scrolls back up
     for i in range(2):
-        win32api.SetCursorPos((x - width, y))
+        win32api.SetCursorPos((xvalue - xSubRegions, yvalue))
         pyautogui.dragTo(
-            x - width, b + height, 0.7, pyautogui.easeInQuad, button="left"
-        )  # scrolls back up
+            xvalue - xSubRegions, yvalue2 + ySubRegions, 0.7, pyautogui.easeInQuad, button="left"
+        )  
+        time.sleep(0.3)
 
-
-def boss(): #attempt level clear
-    click("boss")
+#attempt level clear
+def BossAttempt(): 
+    ClickButton("boss")
     time.sleep(35)
 
-    schedule.run_pending()
-
+    # checks to see if you've succeeded at beating the boss or not
     if (
         pyautogui.locateOnScreen(
-            "assets/fail.png", region=(width * 2, height, 500, 200), confidence=0.8
+            "assets/fail.png", region=(xSubRegions * 2, ySubRegions, 500, 200), confidence=0.8
         )
         != None
-    ):  # checks to see if you've succeeded at beating the boss or not
-        click("next")
-        global bossfail
-        bossfail += 1
+    ):  
+        ClickButton("next")
+        global BossFailCount
+        BossFailCount += 1    
+        time.sleep(3)
 
-    time.sleep(3)
-
-    click("xp")
-
-
-def reset():
-    click("close")
-    if (
-        pyautogui.locateOnScreen(
-            "assets/money.png", region=(width * 3, height * 4, 400, 400), confidence=0.8
-        )
-        == None
-    ): #checks to see if you're already on the right screen
-        click("xp")
-      # all code below is to reset current screen
-    click("enhance")
-
-    x, y = locatedict["money"]
-    x, b = locatedict["money2"]
-
-    for i in range(2):
-        win32api.SetCursorPos((x - width, y))
-        pyautogui.dragTo(
-            x - width, b + height, 0.7, pyautogui.easeInQuad, button="left" #scrolls back up
-        )
+    ClickButton("xp")
 
 
-def attendence():
-    a, b = pyautogui.locateCenterOnScreen(
-        "assets/claim.png", region=(width * 2, height * 4, 600, 300), confidence=0.8
-    )  # claims attendence reward
-    win32api.SetCursorPos((a, b))
-    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
-    time.sleep(0.1)
-    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
-    time.sleep(1)
-    reset()
-
-
-def update():  #main loop
-    global count
-    global topcount
-    x, y = locatedict["notreadylevel"]
+#main loop
+def MainLoop():
+    global CurrentCount
+    global MaxCount
+    xvalue, yvalue = ButtonLocation["notreadylevel"]
     while 1:
-        if pyautogui.pixel(x, y + height // 12)[2] == 182: #checks to see if level up button is ready
-            click("notreadylevel")
-            growth()
+        #checks to see if level up button is ready
+        if pyautogui.pixel(xvalue, yvalue + ySubRegions // 12)[2] == 182: 
+            ClickButton("notreadylevel")
+            UpgradeCharacter()
         schedule.run_pending()
 
-        upgrade()
-        count += 1
+        UpgradeStats()
+        CurrentCount += 1
 
         schedule.run_pending()
 
-        time.sleep(2)
-
-        if count == topcount:
-            boss()
-            count = 0
-
-        if bossfail == 2:
-            topcount += 3   #increments number of loops before another boss attempt if you fail twice in a row
-        for i in range(16): #this loop checks for new inputs while still giving time for money to build up
+        if CurrentCount == MaxCount:
+            BossAttempt()
+            CurrentCount = 0
+        #increments number of loops before another boss attempt if you fail twice in a row
+        if BossFailCount == 2:
+            MaxCount += 3    
+        #this loop checks for new inputs while still giving time for money to build up
+        for i in range(16):
             schedule.run_pending()
             time.sleep(15)
 
 
-def whatisthetime(): #this spaghetti code returns current time + 1 minute
-    whatisthetime = (
-        time.localtime()
-    )  # grabs 1 minute ahead of current time so scheduler works
-    current_timehr = time.strftime("%H", whatisthetime)
-    current_timemin = time.strftime("%M", whatisthetime)
-    current_timemin = int(current_timemin) + 1
-    if (
-        int(current_timemin) <= 9
-    ):  # time module gives time as 12:9 if minutes is below 10
-        current_timemin = f"0{current_timemin}"
-    timepause = f"{current_timehr}:{current_timemin}"
-    return timepause
-
-
-def pause():
-    print("Paused! Hold 'q' to resume.")
-    #Thread(target=ac).start()  #see ac function
-    while keyboard.is_pressed("q") == False: #waits until q is pressed
-        time.sleep(0.5)
-
-    finishsleep.set()  # stops ac function
-    print("Resumed!")
-
-
-def user_input():
-    while not inputasked.is_set(): #these .is_set() conditions allow temination of the loop from anywhere in the file
+def UserInput():
+    #these .is_set() conditions allow temination of the loop from anywhere in the file
+    while not User_InputFinished.is_set(): 
         match input(
-            "Type 'p' for pause, or 'stop' to end the program, or 'reset' to reset to refind button locations. Note: Give the program some time to pause. \n> "
+            "Type 'p' for Pause, or 'stop' to end the program, or 'reset' to refind button locations. Note: Give the program some time to pause. \n> "
         ):
             case "p":
-                timepause = whatisthetime()
+                # schedules Pause at the next end of loop
+                timepause = TimeNow()
                 schedule.every().day.at(timepause).do(
-                    pause
-                )  # schedules pause at the next end of loop
+                    Pause
+                )  
                 print("Input received")
-                while not finishsleep.is_set():
+                while not UserResumed.is_set():
                     time.sleep(0.5)
                 schedule.clear()
-                inputasked.set()
+                User_InputFinished.set()
             case "stop":
-                print("Stopping Program")  # ends main while loop
-                time.sleep(3)
+                print("Stopping Program")  
                 exit()
             case "reset":
-                check = ["False"]
-                data["Loaded"] = check
-                with open("data.json", "w") as outfile:  # loads data into file
+                SetupDone = ["False"]
+                data["Loaded"] = SetupDone
+                # loads data into file
+                with open("data.json", "w") as outfile:  
                     json.dump(data, outfile)
                 exit()
             case _:
                 print("Invalid Input!")
 
+def DefaultPage():
+    ClickButton("close")
+    #checks to see if you're already on the right screen
+    if (
+        pyautogui.locateOnScreen(
+            "assets/money.png", region=(xSubRegions * 3, ySubRegions * 4, 400, 400), confidence=0.8
+        )
+        == None
+    ): 
+        ClickButton("xp")
+    # all code below is to DefaultPage current menu to default
+    ClickButton("enhance")
+
+    xvalue, yvalue = ButtonLocation["money"]
+    xvalue, yvalue2 = ButtonLocation["money2"]
+
+    for i in range(2):
+        win32api.SetCursorPos((xvalue - xSubRegions, yvalue))
+        pyautogui.dragTo(
+            xvalue - xSubRegions, yvalue2 + ySubRegions, 0.7, pyautogui.easeInQuad, button="left" #scrolls back up
+        )
+
+# claims attendence reward
+
+
+#this spaghetti code returns current time + 1 minute
+def TimeNow(): 
+    TimeNow = (
+        time.localtime()
+    )  
+    # grabs 1 minute ahead of current time so scheduler works
+    TimeNowHr = time.strftime("%H", TimeNow)
+    TimeNowMin = time.strftime("%M", TimeNow)
+    TimeScheduleMin = int(TimeNowMin) + 1
+    # time module gives time as 12:9 if minutes is below 10
+    if (
+        int(TimeScheduleMin) <= 9
+    ):  
+        TimeScheduleMin = f"0{TimeScheduleMin}"
+    elif(TimeScheduleMin==60):
+        TimeScheduleMin = 0
+        TimeNowHr = int(TimeNowHr) + 1
+    TimeScheduled = f"{TimeNowHr}:{TimeScheduleMin}"
+    return TimeScheduled
+
+
+def Pause():
+    print("Paused! Hold 'q' to resume.")
+    #Thread(target=ac).start()  #see ac function 
+    #waits until q is pressed
+    while keyboard.is_pressed("q") == False:
+        time.sleep(0.5)
+        
+    # stops ac function
+    UserResumed.set()  
+    print("Resumed!")
+
+def ClaimAttendence():
+    xvalue2, yvalue2 = pyautogui.locateCenterOnScreen(
+        "assets/claim.png", region=(xSubRegions * 2, ySubRegions * 4, 600, 300), confidence=0.8
+    )  
+    win32api.SetCursorPos((xvalue2, yvalue2))
+    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
+    time.sleep(0.1)
+    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
+    time.sleep(1)
+    DefaultPage()
 #this is all commented out because it doesn't work
 # def ac():
-#     while not finishsleep.is_set():
+#     while not UserResumed.is_set():
 #         try:
 #             acinput = inputimeout(
 #                 prompt="Type 'sword' or 'accessory' for the respective autocombines.  This will automatically close.\n >> ",
@@ -297,59 +307,58 @@ def user_input():
 
 
 # def autocombine(which):
-#     click("equip")
-#     click(which)
-#     click("sword")
-#     click("combine")
+#     ClickButton("equip")
+#     ClickButton(which)
+#     ClickButton("sword")
+#     ClickButton("combine")
 
 #     for i in range(23):
-#         click("combinebig")
-#         click("next")
+#         ClickButton("combinebig")
+#         ClickButton("next")
 
-
-def secondary(): #secondary loop for user input
+#SecondaryLoop loop for user input
+def SecondaryLoop(): 
     while 1:
-        user_input()  
+        UserInput()  
         time.sleep(10)
-        finishsleep.clear() # resets events so loops run 
-        inputasked.clear()
-        reset()
-        time.sleep(2)
+        # resets events so loops run 
+        UserResumed.clear() 
+        User_InputFinished.clear()
+        DefaultPage()
 
-
-with open("data.json", "r") as openfile:  # loads data into dict
+with open("data.json", "r") as openfile:  
     data = json.load(openfile)
 
-Images = data.get("Images")
-check = data.get("Loaded")
+SetupDone = data.get("Loaded")
 
-if check[0] == 'True':  #checks to see if locations of buttons has been found before
+#checks to see if locations of buttons has been found before
+if SetupDone[0] == 'True':  
     print("Sucessfully loaded file.")
-    locatedict = data["locatedict"] 
+    ButtonLocation = data["ButtonLocation"] 
     time.sleep(5)
-    click("expand")  
-else: #runs setup code
-    print("Reminder: For first time setup, click into the character tab and nothing else.")
+    ClickButton("expand")  
+else: 
+    #runs setup code
+    print("Reminder: For first time setup, ClickButton into the character tab and nothing else.")
     time.sleep(10)
-    loadImageAssets()
-    locatebuttons()
-    check = ["True"]
-    data["Images"] = Images
-    data["locatedict"] = locatedict
-    data["Loaded"] = check
-    with open("data.json", "w") as outfile:  # loads data into file
+    TempIcons = data.get("Images")
+    LoadImageAssets()
+    LocateAllButtons()
+    SetupDone = ["True"]
+    data["Images"] = TempIcons
+    data["ButtonLocation"] = ButtonLocation
+    data["Loaded"] = SetupDone
+    with open("data.json", "w") as outfile:
         json.dump(data, outfile)
 
+ # checks to make sure screen is setup properly
 if (
     pyautogui.pixelMatchesColor(10, 10, (0, 0, 0)) == False
-):  # checks to make sure screen is setup properly
+): 
     print("Bluestacks is not fullscreened")
     exit()
 
-time.sleep(5)
+schedule.every().day.at("00:00").do(ClaimAttendence) #this is so at midnight bot is not interrupted by mandatory login reward
 
-schedule.every().day.at("00:00").do(attendence) #this is so at midnight bot is not intterupted by mandatory login reward
-
-Thread(target=update).start()
-time.sleep(2)
-Thread(target=secondary).start()
+Thread(target=MainLoop).start()
+Thread(target=SecondaryLoop).start()
